@@ -36,16 +36,16 @@ In your **config.xml** enter the dependencies. The **spec** attributes indicates
 ```xml
 <platform name="ios">
 	...
-	<preference name="pods_ios_min_version" value="7.0" /> <!-- Set the min iOS version. Default is 7.0  -->
+	<preference name="pods_ios_min_version" value="10.0" /> <!-- Set the min iOS version. Default is 10.0  -->
 	<preference name="pods_use_frameworks" value="true" />
-	<pod name="Firebase/Core" version="5.18.0" />
-	<pod name="Firebase/Auth" version="5.18.0" />
-	<pod name="Firebase/Messaging" version="5.18.0" />
-	<pod name="Firebase/Performance" version="5.18.0" />
-	<pod name="Firebase/RemoteConfig" version="5.18.0" />
-	<pod name="Firebase/DynamicLinks" version="5.18.0" />
-	<pod name="Fabric" version="1.9.0" />
-	<pod name="Crashlytics" version="3.12.0" />
+	<pod name="Firebase/Auth" version="6.19.0" />
+	<pod name="Firebase/Messaging" version="6.19.0" />
+	<pod name="Firebase/Performance" version="6.19.0" />
+	<pod name="Firebase/RemoteConfig" version="6.19.0" />
+	<pod name="Firebase/DynamicLinks" version="6.19.0" />
+	<pod name="Firebase/Analytics" version="6.19.0" />
+	<pod name="Fabric" version="1.10.2" />
+	<pod name="Crashlytics" version="3.14.0" />
 </platform>
 ```
 

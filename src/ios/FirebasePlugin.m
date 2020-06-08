@@ -37,10 +37,10 @@ static FirebasePlugin *firebasePlugin;
     NSLog(@"Starting Firebase plugin");
     firebasePlugin = self;
 
-	// For Crashlytics: this enables the browser to correctly detect the error stack
-	// Ref: https://bugs.webkit.org/show_bug.cgi?id=154916
-	// Ref: https://stackoverflow.com/questions/36013645/setting-disable-web-security-and-allow-file-access-from-files-in-ios-wkwebvi
-	NSString* allowFileAccess = [self.commandDelegate.settings objectForKey:[@"FirebasePluginAllowFileAccess" lowercaseString]];
+    // For Crashlytics: this enables the browser to correctly detect the error stack
+    // Ref: https://bugs.webkit.org/show_bug.cgi?id=154916
+    // Ref: https://stackoverflow.com/questions/36013645/setting-disable-web-security-and-allow-file-access-from-files-in-ios-wkwebvi
+    NSString* allowFileAccess = [self.commandDelegate.settings objectForKey:[@"FirebasePluginAllowFileAccess" lowercaseString]];
     if ([self.webView isKindOfClass:WKWebView.class] && [allowFileAccess isEqualToString:@"true"]){
         WKWebView *wkWebView = (WKWebView *) self.webView;
         [wkWebView.configuration.preferences setValue:@YES forKey:@"allowFileAccessFromFileURLs"];
@@ -65,13 +65,20 @@ static FirebasePlugin *firebasePlugin;
 
 // DEPRECATED - alias of getToken
 - (void)getInstanceId:(CDVInvokedUrlCommand *)command {
-    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:[[FIRInstanceID instanceID] token]];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self getToken:command];
 }
 
 - (void)getToken:(CDVInvokedUrlCommand *)command {
-    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:[[FIRInstanceID instanceID] token]];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [[FIRInstanceID instanceID] instanceIDWithHandler:^(FIRInstanceIDResult * _Nullable result, NSError * _Nullable error) {
+        CDVPluginResult *pluginResult;
+        if (error != nil) {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[error localizedDescription]];
+        } else {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:result.token];
+        }
+        
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
 }
 
 - (void)hasPermission:(CDVInvokedUrlCommand *)command {
@@ -240,11 +247,11 @@ static FirebasePlugin *firebasePlugin;
 
 - (void)onTokenRefresh:(CDVInvokedUrlCommand *)command {
     self.tokenRefreshCallbackId = command.callbackId;
-    NSString* currentToken = [[FIRInstanceID instanceID] token];
-
-    if (currentToken != nil) {
-        [self sendToken:currentToken];
-    }
+    [[FIRInstanceID instanceID] instanceIDWithHandler:^(FIRInstanceIDResult * _Nullable result, NSError * _Nullable error) {
+        if (error == nil) {
+            [self sendToken:result.token];
+        }
+    }];
 }
 
 - (void)sendNotification:(NSDictionary *)userInfo {
@@ -276,7 +283,7 @@ static FirebasePlugin *firebasePlugin;
 
 - (void)logEvent:(CDVInvokedUrlCommand *)command {
     [self.commandDelegate runInBackground:^{
-		NSString* name           = [command.arguments objectAtIndex:0];
+        NSString* name           = [command.arguments objectAtIndex:0];
         NSDictionary* parameters = [command.arguments objectAtIndex:1];
 
          [FIRAnalytics logEventWithName:name parameters:parameters];
@@ -513,7 +520,7 @@ static FirebasePlugin *firebasePlugin;
 
 - (void)incrementMetric:(CDVInvokedUrlCommand *)command {
     [self.commandDelegate runInBackground:^{
-		NSString* traceName = [command.arguments objectAtIndex:0];
+        NSString* traceName = [command.arguments objectAtIndex:0];
         NSString* counterNamed = [command.arguments objectAtIndex:1];
         int64_t* increment = (int64_t)[command.arguments objectAtIndex:2];
         CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
@@ -634,7 +641,7 @@ static FirebasePlugin *firebasePlugin;
      [self.commandDelegate runInBackground:^{
         BOOL enabled = [[command argumentAtIndex:0] boolValue];
 
-        [[FIRAnalyticsConfiguration sharedInstance] setAnalyticsCollectionEnabled:enabled];
+        [FIRAnalytics setAnalyticsCollectionEnabled:enabled];
         CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
      }];
@@ -653,7 +660,7 @@ static FirebasePlugin *firebasePlugin;
 }
 
 - (void)clearAllNotifications:(CDVInvokedUrlCommand *)command {
-	[self.commandDelegate runInBackground:^{
+    [self.commandDelegate runInBackground:^{
         [[UIApplication sharedApplication] setApplicationIconBadgeNumber:1];
         [[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
 
